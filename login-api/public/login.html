@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <form id="login-form">
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <button id="logout-button" style="display:none;">Logout</button>
+
+    <script>
+        // Fonction pour gérer le login
+        async function login(email, password) {
+            const response = await fetch('http://localhost:8000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+            return { response, data };
+        }
+
+        // Fonction pour gérer le logout
+        async function logout(token) {
+            const response = await fetch('http://localhost:8000/api/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            return response;
+        }
+
+        // Événement de soumission du formulaire de connexion
+        document.getElementById('login-form').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Empêche le rechargement de la page
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const { response, data } = await login(email, password);
+
+            if (response.ok) {
+                localStorage.setItem('access_token', data.access_token); // Stockage du token
+                alert('Login successful');
+                document.getElementById('logout-button').style.display = 'block'; // Affiche le bouton de déconnexion
+            } else {
+                alert('Login failed: ' + data.message);
+            }
+        });
+
+        // Gestion de l'affichage du bouton de déconnexion
+        const token = localStorage.getItem('access_token');
+
+        if (token) {
+            document.getElementById('logout-button').style.display = 'block'; // Montre le bouton si le token existe
+        }
+
+        // Événement de clic sur le bouton de déconnexion
+        document.getElementById('logout-button').addEventListener('click', async function () {
+            const response = await logout(token);
+
+            if (response.ok) {
+                localStorage.removeItem('access_token'); // Supprime le token
+                alert('Logged out successfully');
+                window.location.reload(); // Recharge la page pour masquer le bouton de déconnexion
+            } else {
+                alert('Logout failed');
+            }
+        });
+    </script>
+</body>
+</html>
